@@ -1,0 +1,18 @@
+# sudo apt-get install ...
+nginx
+certbot
+python-certbot-nginx
+
+# symlink config files
+$ bash setup.sh
+
+# start nginx
+$ sudo systemctl enable nginx
+$ sudo systemctl start nginx
+
+# generate inital certificate
+$ sudo certbot certonly --nginx --noninteractive --agree-tos -d jelly.badgy.eu
+
+# start certbot auto-renew
+sudo systemctl enable certbot.timer
+sudo systemctl start certbot.timer
