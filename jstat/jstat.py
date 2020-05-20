@@ -8,7 +8,7 @@ URL = 'https://jelly.badgy.eu/'
 data = {'content': {'header': 'Jellyfin server stats',
                     'intro': 'Server statistics for the Jellyfin server at '},
         'server': {},
-        'url': URL}
+        'url': URL, 'name': 'jelly.badgy.eu'}
 
 
 @jstat.route('/', methods=['GET'])
@@ -29,7 +29,6 @@ def index():
 def server_status() -> bool:
     try:
         res = get(URL)
-        print(res.headers)
         data['server']['Response time (ms)'] = res.elapsed.microseconds // 1000
         data['server']['Web server'] = res.headers['Server'].split('/')[0]
     except ConnectionError:
@@ -39,46 +38,46 @@ def server_status() -> bool:
 
 def storage() -> list:
     sp = Popen(['df', '-h'], stdout=PIPE, shell=True)
-    drives = run(['grep', '/dev/sd'], stdin=sp.stdout, stdout=PIPE).stdout.decode('utf-8')\
-        .split('\n')
+    drives = run(['grep', '/dev/sd'], stdin=sp.stdout, stdout=PIPE, shell=True).stdout\
+        .decode('utf-8').split('\n')
     drives = [x.split() for x in drives if x]
     return [{'total': x[1], 'used': x[2], 'avail': x[3], 'percent': x[4],
              'percent_int': int(x[4].strip('%'))} for x in drives]
 
 
 def get_os() -> str:
-    sp = Popen(['neofetch'], stdout=PIPE)
-    return run(['grep', 'OS'], stdin=sp.stdout, stdout=PIPE).stdout.decode('utf-8')\
+    sp = Popen(['neofetch'], stdout=PIPE, shell=True)
+    return run(['grep', 'OS'], stdin=sp.stdout, stdout=PIPE, shell=True).stdout.decode('utf-8')\
         .split(':')[1].strip().strip('\x1b[0m')
 
 
 def get_host() -> str:
-    sp = Popen(['neofetch'], stdout=PIPE)
-    return run(['grep', 'Host'], stdin=sp.stdout, stdout=PIPE).stdout.decode('utf-8')\
+    sp = Popen(['neofetch'], stdout=PIPE, shell=True)
+    return run(['grep', 'Host'], stdin=sp.stdout, stdout=PIPE, shell=True).stdout.decode('utf-8')\
         .split(':')[1].strip().strip('\x1b[0m')
 
 
 def get_uptime() -> str:
-    sp = Popen(['neofetch'], stdout=PIPE)
-    return run(['grep', 'Uptime'], stdin=sp.stdout, stdout=PIPE).stdout.decode('utf-8')\
+    sp = Popen(['neofetch'], stdout=PIPE, shell=True)
+    return run(['grep', 'Uptime'], stdin=sp.stdout, stdout=PIPE, shell=True).stdout.decode('utf-8')\
         .split(':')[1].strip().strip('\x1b[0m')
 
 
 def get_kernel() -> str:
-    sp = Popen(['neofetch'], stdout=PIPE)
-    return run(['grep', 'Kernel'], stdin=sp.stdout, stdout=PIPE).stdout.decode('utf-8') \
-        .split(':')[1].strip().strip('\x1b[0m')
+    sp = Popen(['neofetch'], stdout=PIPE, shell=True)
+    return run(['grep', 'Kernel'], stdin=sp.stdout, stdout=PIPE, shell=True).stdout\
+        .decode('utf-8').split(':')[1].strip().strip('\x1b[0m')
 
 
 def get_cpu() -> str:
-    sp = Popen(['neofetch'], stdout=PIPE)
-    return run(['grep', 'CPU'], stdin=sp.stdout, stdout=PIPE).stdout.decode('utf-8')\
+    sp = Popen(['neofetch'], stdout=PIPE, shell=True)
+    return run(['grep', 'CPU'], stdin=sp.stdout, stdout=PIPE, shell=True).stdout.decode('utf-8')\
         .split(':')[1].strip().strip('\x1b[0m')
 
 
 def get_mem() -> str:
-    sp = Popen(['neofetch'], stdout=PIPE)
-    return run(['grep', 'Memory'], stdin=sp.stdout, stdout=PIPE).stdout.decode('utf-8')\
+    sp = Popen(['neofetch'], stdout=PIPE, shell=True)
+    return run(['grep', 'Memory'], stdin=sp.stdout, stdout=PIPE, shell=True).stdout.decode('utf-8')\
         .split(':')[1].strip().strip('\x1b[0m')
 
 
