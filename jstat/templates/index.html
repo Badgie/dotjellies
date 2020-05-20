@@ -21,15 +21,15 @@
             <hr>
             <h4 class="{{ status['status_text'] }}">{{ status['status_text'].capitalize() }}</h4>
             <hr>
-            <h4 class="intro-header">Server</h4>
+            <h4 class="section-header">Server</h4>
             {% for k, v in server.items() %}
             <div class="row justify-content-center">
-                <div class="col-6 col-md-3 col-lg-3 key">{{ k }}:</div>
+                <div class="col-6 col-md-3 col-lg-3 key thicc">{{ k }}:</div>
                 <div class="col-6 col-md-3 col-lg-3 val">{{ v }}</div>
             </div>
             {% endfor %}
             <hr>
-            <h4 class="intro-header">Storage</h4>
+            <h4 class="section-header">Storage</h4>
             <div class="row justify-content-center">
                 <div class="col-2 col-md-2 col-lg-2 key thicc center">Size</div>
                 <div class="col-2 col-md-2 col-lg-2 key thicc center">Used</div>

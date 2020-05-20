@@ -37,6 +37,13 @@
     color: white;
 }
 
+.section-header{
+    text-align: center;
+    margin-top: 1em;
+    color: #03a3dc;
+    font-weight: bold;
+}
+
 .running{
     color: #58bd67;
     text-align: center;
