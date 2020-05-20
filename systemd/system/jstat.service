@@ -3,6 +3,7 @@ Description=uWSGI instance to serve jstat
 After=network.target
 
 [Service]
+User=www-data
 WorkingDirectory=/home/pi/dotjellies/jstat
 Environment="PATH=/home/pi/dotjellies/jstat/venv37/bin"
 ExecStart=/usr/bin/uwsgi --ini jstat.ini
