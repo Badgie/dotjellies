@@ -38,7 +38,7 @@ def server_status() -> bool:
 
 
 def storage() -> list:
-    sp = Popen(['df', '-h'], stdout=PIPE)
+    sp = Popen(['df', '-h'], stdout=PIPE, shell=True)
     drives = run(['grep', '/dev/sd'], stdin=sp.stdout, stdout=PIPE).stdout.decode('utf-8')\
         .split('\n')
     drives = [x.split() for x in drives if x]
