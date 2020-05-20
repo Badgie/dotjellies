@@ -8,3 +8,8 @@ sudo ln -s "$HOME/dotjellies/systemd/system/jstat.service" "/etc/systemd/system/
 sudo ln -s "$HOME/dotjellies/systemd/system/rpistats.service" "/etc/systemd/system/rpistats.service"
 sudo ln -s "$HOME/dotjellies/systemd/system/rpistats.timer" "/etc/systemd/system/rpistats.timer"
 
+mkdir -p "$HOME/dotjellies/jstat/data"
+
+sudo systemctl enable certbot.timer
+sudo systemctl enable rpistats.timer
+sudo systemctl enable jstat.service

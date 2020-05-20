@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # clear old
-rm status
-rm storage
+rm data/status
+rm data/storage
 
 # machine status
 neo=$(neofetch)
@@ -21,9 +21,9 @@ echo "$uptime"
 echo "$kernel"
 echo "$cpu"
 echo "$memory"
-} >> status
+} >> data/status
 
 # storage
 drives=$(df -h | grep '/dev/sd')
 
-echo "$drives" >> storage
+echo "$drives" >> data/storage

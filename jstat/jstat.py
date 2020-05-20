@@ -32,7 +32,7 @@ def server_status():
 
 
 def storage() -> list:
-    with open('storage', 'r') as f:
+    with open('data/storage', 'r') as f:
         drives = f.readlines()
     drives = [x.split() for x in drives if x]
     return [{'total': x[1], 'used': x[2], 'avail': x[3], 'percent': x[4],
@@ -40,7 +40,7 @@ def storage() -> list:
 
 
 def machine_status() -> dict:
-    with open('status', 'r') as f:
+    with open('data/status', 'r') as f:
         status = f.readlines()
     return {re.search(r'[a-zA-Z]{2,}', x.split(':')[0]).group().lstrip('m'):
             x.split(':')[1].strip().replace('\x1b[0m', '') for x in status}
