@@ -6,7 +6,7 @@ After=network.target
 User=www-data
 WorkingDirectory=/home/pi/dotjellies/jstat
 Environment="PATH=/home/pi/dotjellies/jstat/venv37/bin"
-ExecStart=/usr/bin/uwsgi --ini jstat.ini
+ExecStart=/home/pi/dotjellies/jstat/venv37/bin/uwsgi --ini jstat.ini
 
 [Install]
 WantedBy=multi-user.target
