@@ -83,4 +83,4 @@ def get_mem() -> str:
 
 
 if __name__ == '__main__':
-    jstat.run()
+    jstat.run(host='0.0.0.0', port=8887)
