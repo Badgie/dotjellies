@@ -1,0 +1,78 @@
+.input-background{
+    background-color: #d0d0d0;
+    padding-bottom: 15px;
+    border-radius: 2em;
+    margin-top: 0.5%;
+    margin-bottom: 2em;
+}
+
+.container-bg {
+    background-color: #323234;
+}
+
+.title{
+    margin-left: 2%;
+    margin-top: 4.5%;
+    color: #03a3dc;
+    font-size: 70px;
+    font-weight: bold;
+}
+
+.header{
+    display: flex;
+    margin-top: 2%
+}
+
+.link{
+    color: #03a3dc;
+}
+
+.link:hover{
+    color: #1c2f39;
+}
+
+.intro-header{
+    text-align: center;
+    margin-top: 1em;
+    color: white;
+}
+
+.running{
+    color: #58bd67;
+    text-align: center;
+    margin-top: 1em;
+}
+
+.down{
+    color: #bd5858;
+    text-align: center;
+    margin-top: 1em;
+}
+
+.key{
+    color: #03a3dc;
+}
+
+.val{
+    color: white;
+}
+
+.center{
+    text-align: center;
+}
+
+.high-avail{
+    color: #58bd67;
+}
+
+.med-avail{
+    color: #bdbd58;
+}
+
+.low-avail{
+    color: #bd5858;
+}
+
+.thicc{
+    font-weight: bold;
+}
