@@ -3,3 +3,4 @@ venv
 /jstat/venv36/
 /jstat/data/
 /jstat/venv37/
+/jstat/__pycache__/
