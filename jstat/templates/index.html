@@ -46,6 +46,22 @@
                                ">{{ x['percent'] }}</div>
                 </div>
             {% endfor %}
+            <hr>
+            <h4 class="section-header">CPU</h4>
+            {% if cpu %}
+                <div class="row justify-content-center">
+                    <div class="col-1 col-md-1 col-lg-1 key thicc center"></div>
+                    {% for k in cpu['load'].keys() %}
+                        <div class="col-1 col-md-1 col-lg-1 key thicc center">{{ k.strip('cpu') }}</div>
+                    {% endfor %}
+                </div>
+                <div class="row justify-content-center">
+                    <div class="col-1 col-md-1 col-lg-1 key thicc center">Load</div>
+                    {% for v in cpu['load'].values() %}
+                        <div class="col-1 col-md-1 col-lg-1 val center">{{ v }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
         </div>
     </div>
 </body>
