@@ -1,6 +1,6 @@
 from configparser import ConfigParser
 
-CFG_FILE = 'jstat.conf'
+CFG_FILE = 'status/jstat.conf'
 
 
 def _open_config() -> ConfigParser:
