@@ -3,7 +3,7 @@
 ### machine
 neo=$(neofetch)
 
-os=$(echo "$neo" | grep 'OS')
+os=$(echo "$neo" | grep 'OS' | tr "/" "!")
 host=$(echo "$neo" | grep 'Host')
 uptime=$(echo "$neo" | grep 'Uptime')
 kernel=$(echo "$neo" | grep 'Kernel')
