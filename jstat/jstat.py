@@ -12,18 +12,18 @@ data = {'content': {'header': 'Jellyfin server stats',
 
 @jstat.route('/', methods=['GET'])
 def index():
-    data['server'] = machine_status()
-    data['storage'] = storage()
-    server_status()
+    data['server'] = _machine_status()
+    data['storage'] = _storage()
+    _server_status()
     return render_template('index.html', text=data['content'], server=data['server'],
                            status=data)
 
 
-def server_status():
+def _server_status():
     try:
         res = get(URL)
         data['server']['Response time (ms)'] = res.elapsed.microseconds // 1000
-        data['server']['Web server'] = res.headers['Server'].split('/')[0]
+        data['server']['Web server'] = ' '.join(x for x in res.headers['Server'].split('/'))
         data['status'] = True
         data['status_text'] = 'running'
     except ConnectionError:
@@ -31,7 +31,7 @@ def server_status():
         data['status_text'] = 'down'
 
 
-def storage() -> list:
+def _storage() -> list:
     with open('data/storage', 'r') as f:
         drives = f.readlines()
     drives = [x.split() for x in drives if x]
@@ -39,7 +39,7 @@ def storage() -> list:
              'percent_int': int(x[4].strip('%'))} for x in drives]
 
 
-def machine_status() -> dict:
+def _machine_status() -> dict:
     with open('data/status', 'r') as f:
         status = f.readlines()
     return {re.search(r'[a-zA-Z]{2,}', x.split(':')[0]).group().lstrip('m'):
