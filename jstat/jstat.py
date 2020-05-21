@@ -4,31 +4,30 @@ import re
 
 jstat = Flask(__name__)
 
-URL = 'https://jelly.badgy.eu/'
-data = {'content': {'header': 'Jellyfin server stats',
-                    'intro': 'Server statistics for the Jellyfin server at '},
-        'url': URL, 'name': 'jelly.badgy.eu'}
+status = {'content': {'header': 'Jellyfin server status',
+                      'intro': 'Server status for the Jellyfin server at '},
+          'url': 'https://jelly.badgy.eu/', 'name': 'jelly.badgy.eu'}
 
 
 @jstat.route('/', methods=['GET'])
 def index():
-    data['server'] = _machine_status()
-    data['storage'] = _storage()
+    status['server'] = _machine_status()
+    status['storage'] = _storage()
     _server_status()
-    return render_template('index.html', text=data['content'], server=data['server'],
-                           status=data)
+    return render_template('index.html', text=status['content'], server=status['server'],
+                           status=status)
 
 
 def _server_status():
     try:
-        res = get(URL)
-        data['server']['Response time (ms)'] = res.elapsed.microseconds // 1000
-        data['server']['Web server'] = ' '.join(x for x in res.headers['Server'].split('/'))
-        data['status'] = True
-        data['status_text'] = 'running'
+        res = get(status['url'])
+        status['server']['Response time (ms)'] = res.elapsed.microseconds // 1000
+        status['server']['Web server'] = ' '.join(x for x in res.headers['Server'].split('/'))
+        status['status'] = True
+        status['status_text'] = 'running'
     except ConnectionError:
-        data['status'] = False
-        data['status_text'] = 'down'
+        status['status'] = False
+        status['status_text'] = 'down'
 
 
 def _storage() -> list:
