@@ -11,12 +11,18 @@
     margin-bottom: 5%;
 }
 
-.title{
-    margin-left: 2%;
+.title-gradient{
     margin-top: 4.5%;
-    color: #03a3dc;
+    background-image: linear-gradient(to right, #a85dc3, #03a3dc);
+    color: transparent;
     font-size: 70px;
     font-weight: bold;
+    background-clip: text;
+}
+
+.box {
+    margin-top: 2em;
+    margin-bottom: 5em;
 }
 
 .header{
@@ -29,12 +35,15 @@
 }
 
 .link:hover{
-    color: #1c2f39;
+    color: #3f697f;
+}
+
+.link:focus{
+    color: #3f697f;
 }
 
 .intro-header{
     text-align: center;
-    margin-top: 1em;
     color: white;
 }
 

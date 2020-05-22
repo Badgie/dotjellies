@@ -1,47 +1,53 @@
 <!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
-<title>{% block title %}Jellyfin stats{% endblock %}</title>
+<title>{% block title %}Jellyfin status{% endblock %}</title>
 <link rel="shortcut icon" type="image/x-icon" href="{{ url_for('static', filename='img/favicon.ico') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='style/bootstrap.min.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='style/style.css') }}">
 <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
 
 <body class="container-bg">
-    <div class="justify-content-center header">
-        <img src="{{ url_for('static', filename='img/jelly-logo.png') }}" align="center">
-        <h1 class="title">{{ text['header'] }}</h1>
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-12 col-lg-2 justify-content-center header">
+            <img src="{{ url_for('static', filename='img/jelly-logo.png') }}">
+        </div>
     </div>
-    <div class="container" style="margin-top:5em">
-        <div class="col-12 col-md-6 col-md-offset-3 col-lg-12 col-lg-offset-6">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-12 col-lg-5 justify-content-center">
+            <h1 class="title-gradient center">{{ text['header'] }}</h1>
+        </div>
+    </div>
+    <div class="container box">
+        <div class="col-12 col-md-12 col-lg-12">
             <div class="row justify-content-center">
-                <h3 class="intro-header">
+                <h3 class="intro-header center">
                     {{ text['intro'] }}<a href="{{ status['url'] }}" class="link">{{ status['name'] }}</a>
                 </h3>
             </div>
             <hr>
-            <h4 class="{{ status['status_text'] }}">{{ status['status_text'].capitalize() }}</h4>
+            <h4 class="{{ status['status_text'] }} thicc">{{ status['status_text'].capitalize() }}</h4>
             <hr>
             <h4 class="section-header">Server</h4>
             {% for k, v in server.items() %}
             <div class="row justify-content-center">
-                <div class="col-6 col-md-3 col-lg-3 offset-2 key thicc">{{ k }}:</div>
+                <div class="col-4 col-md-3 col-lg-3 offset-2 key thicc">{{ k }}:</div>
                 <div class="col-6 col-md-5 col-lg-5 val">{{ v }}</div>
             </div>
             {% endfor %}
             <hr>
             <h4 class="section-header">Storage</h4>
             <div class="row justify-content-center">
-                <div class="col-2 col-md-2 col-lg-2 key thicc center">Size</div>
-                <div class="col-2 col-md-2 col-lg-2 key thicc center">Used</div>
-                <div class="col-2 col-md-2 col-lg-2 key thicc center">Available</div>
-                <div class="col-2 col-md-2 col-lg-2 key thicc center">Percentage</div>
+                <div class="col-3 col-md-2 col-lg-2 key thicc center">Size</div>
+                <div class="col-3 col-md-2 col-lg-2 key thicc center">Used</div>
+                <div class="col-3 col-md-2 col-lg-2 key thicc center">Available</div>
+                <div class="col-3 col-md-2 col-lg-2 key thicc center">Percentage</div>
             </div>
             {% for x in status['storage'] %}
                 <div class="row justify-content-center">
-                    <div class="col-2 col-md-2 col-lg-2 val center">{{ x['total'] }}</div>
-                    <div class="col-2 col-md-2 col-lg-2 val center">{{ x['used'] }}</div>
-                    <div class="col-2 col-md-2 col-lg-2 val center">{{ x['avail'] }}</div>
-                    <div class="col-2 col-md-2 col-lg-2 val center
+                    <div class="col-3 col-md-2 col-lg-2 val center">{{ x['total'] }}</div>
+                    <div class="col-3 col-md-2 col-lg-2 val center">{{ x['used'] }}</div>
+                    <div class="col-3 col-md-2 col-lg-2 val center">{{ x['avail'] }}</div>
+                    <div class="col-3 col-md-2 col-lg-2 val center
                                     {% if x['percent_int'] >= 90 %}low-avail{% elif x['percent_int'] >= 70 %}med-avail{% else %}high-avail{% endif %}
                                ">{{ x['percent'] }}</div>
                 </div>
@@ -50,15 +56,15 @@
             <h4 class="section-header">CPU</h4>
             {% if cpu %}
                 <div class="row justify-content-center">
-                    <div class="col-1 col-md-1 col-lg-1 key thicc center"></div>
+                    <div class="col-2 col-md-2 col-lg-1 key thicc center"></div>
                     {% for k in cpu['load'].keys() %}
-                        <div class="col-1 col-md-1 col-lg-1 key thicc center">{{ k.strip('cpu') }}</div>
+                        <div class="col-2 col-md-2 col-lg-1 key thicc center">{{ k.strip('cpu') }}</div>
                     {% endfor %}
                 </div>
                 <div class="row justify-content-center">
-                    <div class="col-1 col-md-1 col-lg-1 key thicc center">Load</div>
+                    <div class="col-2 col-md-2 col-lg-1 key thicc center">Load</div>
                     {% for v in cpu['load'].values() %}
-                        <div class="col-1 col-md-1 col-lg-1 val center">{{ v }}</div>
+                        <div class="col-2 col-md-2 col-lg-1 val center">{{ v }}</div>
                     {% endfor %}
                 </div>
             {% endif %}
