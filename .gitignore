@@ -4,4 +4,4 @@ venv
 /jstat/data/
 /jstat/venv37/
 /jstat/__pycache__/
-/jstat/jstat.conf
+/jstat/status/jstat.conf
