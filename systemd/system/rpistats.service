@@ -4,5 +4,5 @@ Description=Machine status retrieval
 [Service]
 User=pi
 Type=oneshot
-WorkingDirectory=/home/pi/dotjellies/jstat/status
-ExecStart=/bin/bash status.sh
+WorkingDirectory=/home/pi/dotjellies/jstat
+ExecStart=/bin/bash status/test.sh
