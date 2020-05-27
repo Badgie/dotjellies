@@ -61,7 +61,7 @@ add_machine() {
     # rpi only
     temp=$(vcgencmd measure_temp | sed -r "s/'C//g" | sed -r "s/temp=/Core temp: /g" )
 
-    if [[ ! -t temp ]]; then
+    if [[ $temp == 'bash: vcgencmd: command not found' ]]; then
         temp=null
     fi
 
