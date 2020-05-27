@@ -83,11 +83,14 @@ def __mem_max(col: str) -> int:
 
 def __get_main_machine_data(col: str) -> list:
     data = db.get_all_machine(col if col == '*' else f'time, {col}')
-    if col == 'res_time' or col == 'core_temp':
-        data = [[int(x[0]), float(re.search(r'([0-9]+\.?[0-9]*)', x[1]).groups()[0])] for x in data if x[1]]
+    if col == 'res_time':
+        data = [[int(x[0]), float(re.search(r'([0-9]+\.?[0-9]*)', x[1]).groups()[0])] for x in data]
     elif col == 'memory':
         data = [[int(x[0]), int(x[1].split('/')[0].split(':')[1].strip('\x1b[0m MiB'))]
                 for x in data]
+    elif col == 'core_temp':
+        data = [[int(x[0]), float(x[1].split(':')[1].strip())]
+                for x in data if x[1] and x[1] != 'null']
     return data
 
 
