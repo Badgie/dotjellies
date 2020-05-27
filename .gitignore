@@ -5,3 +5,11 @@ venv
 /jstat/venv37/
 /jstat/__pycache__/
 /jstat/status/jstat.conf
+/jstat/static/db/jstat.db
+/jstat/static/img/cpu_plot_avg_hour_day.png
+/jstat/static/img/cpu_plot_avg_hour_halfday.png
+/jstat/static/img/cpu_plot_avg_minute_hour.png
+/jstat/static/img/cpu_plot_avg_minute_sixhour.png
+/jstat/static/img/cpu_plot_avg_minute_threehour.png
+/jstat/static/img/cpu_plot_avg_month.png
+/jstat/static/img/cpu_plot_avg_week.png
