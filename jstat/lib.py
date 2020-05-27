@@ -70,6 +70,8 @@ def plot_machine_avg_per_minute(interval: int, hours: int, period: str, col_name
 def __lim(col: str) -> list:
     if col == 'memory':
         return [0, __mem_max(col)]
+    elif col == 'core_temp':
+        return [0, 100]
     else:
         return [0, 150]
 
@@ -81,8 +83,8 @@ def __mem_max(col: str) -> int:
 
 def __get_main_machine_data(col: str) -> list:
     data = db.get_all_machine(col if col == '*' else f'time, {col}')
-    if col == 'res_time':
-        data = [[int(x[0]), float(re.search(r'([0-9]+\.?[0-9]*)', x[1]).groups()[0])] for x in data]
+    if col == 'res_time' or col == 'core_temp':
+        data = [[int(x[0]), float(re.search(r'([0-9]+\.?[0-9]*)', x[1]).groups()[0])] for x in data if x[1]]
     elif col == 'memory':
         data = [[int(x[0]), int(x[1].split('/')[0].split(':')[1].strip('\x1b[0m MiB'))]
                 for x in data]
