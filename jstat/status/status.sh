@@ -12,10 +12,38 @@ init_db() {
 EOQ
 }
 
+create_table() {
+    if [[ $1 == 'machine' ]]; then
+        name='machine'
+        cols='time TEXT, os TEXT, host TEXT, uptime TEXT, kernel TEXT, cpu TEXT, memory TEXT, core_temp INTEGER, res_time INTEGER, web_server TEXT'
+    elif [[ $1 == 'cpu' ]]; then
+        name='cpu'
+        cols='time TEXT, cpu_id TEXT, user TEXT, nice TEXT, system TEXT, idle TEXT, iowait TEXT, irq TEXT, softirq TEXT, steal TEXT, guest TEXT, guest_nice TEXT'
+    elif [[ $1 == 'storage' ]]; then
+        name='storage'
+        cols='time TEXT, drive_id TEXT, size TEXT, used TEXT, avail TEXT, percentage TEXT'
+    else
+        echo "Error: cannot identify table $1"
+        return
+    fi
+    sqlite3 "${db}" << EOQ
+        attach "${db}" as jstat;
+        CREATE TABLE $name ($cols);
+EOQ
+}
+
 check_init() {
     if [[ ! -f "$db" ]]; then
         init_db
     fi
+
+    tables=('machine' 'cpu' 'storage')
+    for table in "${tables[@]}"; do
+        check=$(sqlite3 -line "${db}" "SELECT name FROM sqlite_master WHERE type='table' AND name='$table';" | sed -r 's/ name = //g')
+        if [[ ! $check == "$table" ]]; then
+            create_table "$table"
+        fi
+    done
 }
 
 # inp: stamp, os, host, uptime, kernel, cpu, memory, core_temp, res_time, web_server
@@ -78,7 +106,11 @@ if [[ ! -d static/db ]]; then
     mkdir static/db
 fi
 
+# ensure db exists
 check_init
+# get machine data
 add_machine
+# get storage data
 add_storage
+# get cpu data
 add_cpu

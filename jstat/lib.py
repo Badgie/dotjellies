@@ -8,9 +8,8 @@ from typing import Tuple, List
 
 import db
 
-
 COLORS = {'blue': (.12, .639, .863), 'gray': (.196, .196, .204)}
-
+GRAPH_DIR = 'static/img/graphs'
 
 """
 Storage
@@ -32,7 +31,80 @@ def machine_status() -> dict:
     status_file = db.get_recent_machine()
     del status_file[0]  # stamp not needed here
     return {re.search(r'[a-zA-Z ]{2,}', x.split(':')[0]).group().lstrip('m'):
-                x.split(':')[1].strip().replace('\x1b[0m', '') for x in status_file if x != 'null'}
+            x.split(':')[1].strip().replace('\x1b[0m', '')
+            for x in status_file if x != 'null'}
+
+
+def plot_machine_avg_per_day(days: int, period: str, col_name: str, col: str = '*'):
+    lim = __lim(col)
+    grps, stamps = __get_main_machine_data_days(col)
+    avg = __avg_by_stamp(grps)
+
+    x = list(avg.keys()) if len(avg.keys()) < days else \
+        [list(avg.keys())[day] for day in range(len(avg.keys()) - days, len(avg.keys()))]
+    y = list(avg.values()) if len(avg.values()) < days else \
+        [list(avg.values())[day] for day in range(len(avg.values()) - days, len(avg.keys()))]
+
+    __jstat_plot(x=x, y=y, title=f'{col_name} over the last {days} days (1 day interval)',
+                 lim=lim, ylabel=col_name)
+    plt.savefig(f'{GRAPH_DIR}/{col}/{col}_plot_avg_day_{period}.png', format='png',
+                facecolor=COLORS['gray'])
+    plt.clf()
+
+
+def plot_machine_avg_per_minute(interval: int, hours: int, period: str, col_name: str,
+                                col: str = '*'):
+    lim = __lim(col)
+    grps, stamps = __get_main_machine_data_minutes(interval, hours, col)
+    avg = __avg_by_stamp(grps)
+
+    __jstat_plot(x=list(avg.keys()), y=list(avg.values()),
+                 title=f'{col_name} over the last {hours} hour{"s" if hours > 1 else ""} '
+                       f'({interval}m interval)',
+                 lim=lim, ylabel=col_name)
+    plt.savefig(f'{GRAPH_DIR}/{col}/{col}_plot_avg_minute_{period}.png', format='png',
+                facecolor=COLORS['gray'])
+    plt.clf()
+
+
+def __lim(col: str) -> list:
+    if col == 'memory':
+        return [0, __mem_max(col)]
+    else:
+        return [0, 150]
+
+
+def __mem_max(col: str) -> int:
+    mem = db.get_recent_machine_col(col)
+    return int(mem[1].split('/')[1].replace('MiB\x1b[0m', ''))
+
+
+def __get_main_machine_data(col: str) -> list:
+    data = db.get_all_machine(col if col == '*' else f'time, {col}')
+    if col == 'res_time':
+        data = [[int(x[0]), float(re.search(r'([0-9]+\.?[0-9]*)', x[1]).groups()[0])] for x in data]
+    elif col == 'memory':
+        data = [[int(x[0]), int(x[1].split('/')[0].split(':')[1].strip('\x1b[0m MiB'))]
+                for x in data]
+    return data
+
+
+def __get_main_machine_data_days(col: str) -> Tuple[dict, List[str]]:
+    data = __get_main_machine_data(col)
+    stamps = [datetime.fromtimestamp(int(x[0])).strftime('%b %d') for x in data]
+    values = [x[1] for x in data]
+    grps = __group_by_stamp_day(data, stamps, values)
+    return grps, stamps
+
+
+def __get_main_machine_data_minutes(interval: int, hours: int, col: str)\
+        -> Tuple[dict, List[str]]:
+    now = round(time.time())
+    data = __get_main_machine_data(col)
+    stamps = __create_minute_stamps(interval, hours, now)
+    values = [x[1] for x in data]
+    grps = __group_by_stamp_minutes(data, stamps, values, interval, now, hours)
+    return grps, list(grps.keys())
 
 
 """
@@ -107,68 +179,6 @@ def cpu_load(cpus: list, str_format: bool = True, plot: bool = False) -> dict:
     return percentages
 
 
-def __group_cpu_by_stamp_day(data: list, stamps: list, percentages: list) -> dict:
-    grps = {}
-    # no percentage entry for first index
-    del data[0]
-    del stamps[0]
-    print(len(data), len(stamps), len(percentages))
-    for x in range(len(data)):
-        if stamps[x] not in grps.keys():
-            grps[stamps[x]] = []
-
-        grps[stamps[x]].append({'data': data[x], 'stamp': stamps[x], 'load': percentages[x]})
-    return grps
-
-
-def __is_in_next(stamp: int, cur_entry: int, interval_sec: int) -> bool:
-    if stamp > cur_entry > stamp - interval_sec:
-        return False
-    return True
-
-
-def __is_valid(first_stamp: int, cur_entry: int) -> bool:
-    if first_stamp > cur_entry:
-        return False
-    return True
-
-
-def __group_cpu_by_stamp_minutes(data: list, stamps: List[dict], percentages: list,
-                                 interval: int, now: int, hours: int) -> dict:
-    # no percentage entry for first index
-    del data[0]
-    grps = {x['stamp']: [] for x in stamps}
-    checkpoint = 0
-    interval_sec = interval * 60
-    first_stamp = now - (now % (interval * 60)) - (hours * 3600)
-    stamp_int = now - (now % (interval * 60))
-
-    for x in range(len(stamps)):
-        if stamps[x]['real'] > stamp_int:
-            stamp_int -= interval * 60
-        else:
-            for y in range(checkpoint, len(data)):
-                if not __is_valid(first_stamp, int(data[y][0])):
-                    continue
-                if __is_in_next(stamps[x]['real'], int(data[y][0]), interval_sec):
-                    checkpoint = y
-                    break
-                grps[stamps[x]['stamp']].append({'data': data[y], 'stamp': stamps[x]['real'],
-                                                 'load': percentages[y]})
-    return grps
-
-
-def __create_minute_stamps(interval: int, hours: int, now: int) -> list:
-    last = now - (now % (interval * 60))
-    first = last - (hours * 3600)
-    return [{'stamp': datetime.fromtimestamp(x).strftime('%H:%M'), 'real': x}
-            for x in range(first, last + 1, interval * 60)]
-
-
-def __avg_by_stamp(grps: dict) -> dict:
-    return {stamp: mean([x['load'] for x in entries]) for stamp, entries in grps.items() if entries}
-
-
 def __get_main_cpu_data() -> list:
     return [entry for entry in db.get_all_cpu() if entry[1] == 'cpu']
 
@@ -182,7 +192,11 @@ def __get_main_cpu_data_days() -> Tuple[dict, List[str]]:
     data = __get_main_cpu_data()
     stamps = [datetime.fromtimestamp(int(x[0])).strftime('%b %d') for x in data]
     percentages = [cpu_load([data[x - 1], data[x]], False, True) for x in range(1, len(data))]
-    grps = __group_cpu_by_stamp_day(data.copy(), stamps.copy(), [x['cpu'] for x in percentages])
+    # no percentage entry for first index
+    del data[0]
+    # normalize stamps
+    del stamps[0]
+    grps = __group_by_stamp_day(data, stamps, [x['cpu'] for x in percentages])
     return grps, stamps
 
 
@@ -191,9 +205,50 @@ def __get_main_cpu_data_minutes(interval: int, hours: int) -> Tuple[dict, List[s
     data = __get_main_cpu_data()
     stamps = __create_minute_stamps(interval, hours, now)
     percentages = [cpu_load([data[x - 1], data[x]], False, True) for x in range(1, len(data))]
-    grps = __group_cpu_by_stamp_minutes(data.copy(), stamps.copy(), [x['cpu'] for x in percentages],
-                                        interval, now, hours)
+    # no percentage entry for first index
+    del data[0]
+    grps = __group_by_stamp_minutes(data, stamps, [x['cpu'] for x in percentages], interval, now,
+                                    hours)
     return grps, list(grps.keys())
+
+
+def plot_cpu_avg_per_day(days: int, period: str):
+    """
+    Plots the average CPU load over the last {days} days, with daily interval.
+    """
+    grps, stamps = __get_main_cpu_data_days()
+    avg = __avg_by_stamp(grps)
+
+    x = list(avg.keys()) if len(avg.keys()) < days else \
+        [list(avg.keys())[day] for day in range(len(avg.keys()) - days, len(avg.keys()))]
+    y = list(avg.values()) if len(avg.values()) < days else \
+        [list(avg.values())[day] for day in range(len(avg.values()) - days, len(avg.keys()))]
+
+    __jstat_plot(x=x, y=y, title=f'CPU load over the last {days} days (1 day interval)',
+                 lim=[0, 100], ylabel='CPU load')
+    plt.savefig(f'{GRAPH_DIR}/cpu/cpu_plot_avg_{period}.png', format='png', facecolor=COLORS['gray'])
+    plt.clf()
+
+
+def plot_cpu_avg_per_minute(interval: int, hours: int, period: str):
+    """
+    Plots the average CPU load over the last {hours} hours, with {interval} minute interval.
+    """
+    grps, stamps = __get_main_cpu_data_minutes(interval, hours)
+    avg = __avg_by_stamp(grps)
+
+    __jstat_plot(x=list(avg.keys()), y=list(avg.values()),
+                 title=f'CPU load over the last {hours} hour{"s" if hours > 1 else ""} '
+                       f'({interval}m interval)',
+                 lim=[0, 100], ylabel='CPU load')
+    plt.savefig(f'{GRAPH_DIR}/cpu/cpu_plot_avg_minute_{period}.png', format='png',
+                facecolor=COLORS['gray'])
+    plt.clf()
+
+
+"""
+Plot generation
+"""
 
 
 def __jstat_plot(x: list, y: list, title: str, lim: list, ylabel: str):
@@ -211,55 +266,54 @@ def __jstat_plot(x: list, y: list, title: str, lim: list, ylabel: str):
     [i.set_color('white') for i in plt.gca().get_yticklabels()]
 
 
-def plot_cpu_avg_per_day(days: int, period: str):
-    """
-    Plots the average CPU load over the last {days} days, with daily interval.
-    """
-    grps, stamps = __get_main_cpu_data_days()
+def __group_by_stamp_minutes(data: list, stamps: List[dict], percentages: list,
+                             interval: int, now: int, hours: int) -> dict:
+    grps = {x['stamp']: [] for x in stamps}
+    checkpoint = 0
+    interval_sec = interval * 60
+    first_stamp = now - (now % (interval * 60)) - (hours * 3600)
+    stamp_int = now - (now % (interval * 60))
 
-    avg = __avg_by_stamp(grps)
-    x = list(avg.keys()) if len(avg.keys()) < days else \
-        [list(avg.keys())[day] for day in range(len(avg.keys()) - days, len(avg.keys()))]
-    y = list(avg.values()) if len(avg.values()) < days else \
-        [list(avg.values())[day] for day in range(len(avg.values()) - days, len(avg.keys()))]
-
-    __jstat_plot(x=x, y=y, title=f'CPU load over the last {days} days (1 day interval)',
-                 lim=[0, 100], ylabel='CPU load')
-    plt.savefig(f'static/img/cpu_plot_avg_{period}.png', format='png', facecolor=COLORS['gray'])
-    plt.clf()
-
-
-def plot_cpu_avg_per_hour(interval: int, hours: int, period: str):
-    """
-    Plots the average CPU load over the last {hours} hours, with {interval} minute interval.
-    """
-    grps, stamps = __get_main_cpu_data_minutes(interval, hours)
-    avg = __avg_by_stamp(grps)
-
-    __jstat_plot(x=list(avg.keys()), y=list(avg.values()),
-                 title=f'CPU load over the last {hours} hour{"s" if hours > 1 else ""} '
-                       f'({interval}m interval)',
-                 lim=[0, 100], ylabel='CPU load')
-    plt.savefig(f'static/img/cpu_plot_avg_hour_{period}.png', format='png',
-                facecolor=COLORS['gray'])
-    plt.clf()
+    for x in range(len(stamps)):
+        if stamps[x]['real'] > stamp_int:
+            stamp_int -= interval * 60
+        else:
+            for y in range(checkpoint, len(data)):
+                if not __is_valid(first_stamp, int(data[y][0])):
+                    continue
+                if __is_in_next(stamps[x]['real'], int(data[y][0]), interval_sec):
+                    checkpoint = y
+                    break
+                grps[stamps[x]['stamp']].append({'data': data[y], 'stamp': stamps[x]['real'],
+                                                 'val': percentages[y]})
+    return grps
 
 
-def plot_cpu_avg_per_minute(interval: int, hours: int, period: str):
-    """
-    Plots the average CPU load over the last {hours} hours, with {interval} minute interval.
-    """
-    grps, stamps = __get_main_cpu_data_minutes(interval, hours)
-    avg = __avg_by_stamp(grps)
-
-    __jstat_plot(x=list(avg.keys()), y=list(avg.values()),
-                 title=f'CPU load over the last {hours} hour{"s" if hours > 1 else ""} '
-                       f'({interval}m interval)',
-                 lim=[0, 100], ylabel='CPU load')
-    plt.savefig(f'static/img/cpu_plot_avg_minute_{period}.png', format='png',
-                facecolor=COLORS['gray'])
-    plt.clf()
+def __group_by_stamp_day(data: list, stamps: list, percentages: list) -> dict:
+    grps = {stamp: [] for stamp in stamps}
+    for x in range(len(data)):
+        grps[stamps[x]].append({'data': data[x], 'stamp': stamps[x], 'val': percentages[x]})
+    return grps
 
 
-if __name__ == '__main__':
-    plot_cpu_avg_per_hour(60, 10, 'onehour')
+def __is_in_next(stamp: int, cur_entry: int, interval_sec: int) -> bool:
+    if stamp > cur_entry > stamp - interval_sec:
+        return False
+    return True
+
+
+def __is_valid(first_stamp: int, cur_entry: int) -> bool:
+    if first_stamp > cur_entry:
+        return False
+    return True
+
+
+def __create_minute_stamps(interval: int, hours: int, now: int) -> list:
+    last = now - (now % (interval * 60))
+    first = last - (hours * 3600)
+    return [{'stamp': datetime.fromtimestamp(x).strftime('%H:%M'), 'real': x}
+            for x in range(first, last + 1, interval * 60)]
+
+
+def __avg_by_stamp(grps: dict) -> dict:
+    return {stamp: mean([x['val'] for x in entries]) for stamp, entries in grps.items() if entries}

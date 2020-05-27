@@ -11,6 +11,25 @@ def get_recent_machine() -> list:
     return list(machine[:len(machine) - 1])
 
 
+def get_recent_machine_col(col: str) -> list:
+    """
+    Gets col(s) from machine database. {col} may be a comma separated array of cols.
+    """
+    query = f'SELECT MAX(time), {col} FROM machine'
+    conn = sqlite3.connect(DB)
+    c = conn.cursor()
+    c.execute(query)
+    return c.fetchone()
+
+
+def get_all_machine(cols: str) -> list:
+    query = f'SELECT {cols} FROM machine'
+    conn = sqlite3.connect(DB)
+    c = conn.cursor()
+    c.execute(query)
+    return c.fetchall()
+
+
 def get_recent_cpu_pair() -> list:
     conn = sqlite3.connect(DB)
     c = conn.cursor()
