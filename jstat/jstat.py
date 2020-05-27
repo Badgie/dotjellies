@@ -28,7 +28,7 @@ graphs = {'types': {'cpu': {'base': 'cpu_plot_avg_', 'front': 'minute_hour',
 if platform.uname().node == 'raspberrypi':
     graphs['types']['core_temp'] = {'base': 'core_temp_plot_avg_', 'front': 'minute_hour',
                                     'full_path': 'img/graphs/core_temp/core_temp_plot_avg_'
-                                                 'minute_hour',
+                                                 'minute_hour.png',
                                     'header_name': 'Core temp'}
 
 
