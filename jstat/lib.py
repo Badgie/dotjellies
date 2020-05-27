@@ -47,7 +47,7 @@ def plot_machine_avg_per_day(days: int, period: str, col_name: str, col: str = '
 
     __jstat_plot(x=x, y=y, title=f'{col_name} over the last {days} days (1 day interval)',
                  lim=lim, ylabel=col_name)
-    plt.savefig(f'{GRAPH_DIR}/{col}/{col}_plot_avg_day_{period}.png', format='png',
+    plt.savefig(f'{GRAPH_DIR}/{col}/{col}_plot_avg_{period}.png', format='png',
                 facecolor=COLORS['gray'])
     plt.clf()
 
