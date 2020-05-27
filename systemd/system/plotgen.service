@@ -1,0 +1,9 @@
+[Unit]
+Description=Graph generation for JStat
+
+[Service]
+User=pi
+Type=oneshot
+WorkingDirectory=/home/pi/dotjellies/jstat
+Environment="PATH=/home/pi/dotjellies/jstat/venv37/bin"
+ExecStart=python plot_gen.py

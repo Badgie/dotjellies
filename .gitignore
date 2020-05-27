@@ -13,3 +13,4 @@ venv
 /jstat/static/img/cpu_plot_avg_minute_threehour.png
 /jstat/static/img/cpu_plot_avg_month.png
 /jstat/static/img/cpu_plot_avg_week.png
+/jstat/static/img/graphs/
