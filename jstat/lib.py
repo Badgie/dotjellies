@@ -1,4 +1,7 @@
 import re
+import matplotlib as mpl
+# allow using matplotlib without running x-server
+mpl.use('Agg')
 import matplotlib.pyplot as plt
 import time
 
