@@ -59,7 +59,7 @@ def plot_machine_avg_per_day(days: int, period: str, col_name: str, col: str = '
 def plot_machine_avg_per_hour(interval: int, hours: int, period: str, col_name: str,
                               col: str = '*'):
     lim = __lim(col)
-    grps, stamps = __get_main_machine_data_minutes(interval, hours, col)
+    grps, stamps = __get_main_machine_data_hours(interval, hours, col)
     avg = __avg_by_stamp(grps)
 
     __jstat_plot(x=list(avg.keys()), y=list(avg.values()),
@@ -74,7 +74,7 @@ def plot_machine_avg_per_hour(interval: int, hours: int, period: str, col_name: 
 def plot_machine_avg_per_minute(interval: int, minutes: int, period: str, col_name: str,
                                 col: str = '*'):
     lim = __lim(col)
-    grps, stamps = __get_main_machine_data_minutes(interval, 60 // minutes, col)
+    grps, stamps = __get_main_machine_data_minutes(interval, minutes, col)
     avg = __avg_by_stamp(grps)
 
     __jstat_plot(x=list(avg.keys()), y=list(avg.values()),
@@ -121,13 +121,23 @@ def __get_main_machine_data_days(col: str) -> Tuple[dict, List[str]]:
     return grps, stamps
 
 
-def __get_main_machine_data_minutes(interval: int, hours: int, col: str)\
+def __get_main_machine_data_hours(interval: int, hours: int, col: str)\
         -> Tuple[dict, List[str]]:
     now = round(time.time())
     data = __get_main_machine_data(col)
-    stamps = __create_minute_stamps(interval, hours, now)
+    stamps = __create_hour_stamps(interval, hours, now)
     values = [x[1] for x in data]
-    grps = __group_by_stamp_minutes(data, stamps, values, interval, now, hours)
+    grps = __group_by_stamp_hours(data, stamps, values, interval, now, hours)
+    return grps, list(grps.keys())
+
+
+def __get_main_machine_data_minutes(interval: int, minutes: int, col: str)\
+        -> Tuple[dict, List[str]]:
+    now = round(time.time())
+    data = __get_main_machine_data(col)
+    stamps = __create_minute_stamps(interval, minutes, now)
+    values = [x[1] for x in data]
+    grps = __group_by_stamp_minutes(data, stamps, values, interval, now, minutes)
     return grps, list(grps.keys())
 
 
@@ -174,7 +184,7 @@ def plot_cpu_avg_per_hour(interval: int, hours: int, period: str):
     """
     Plots the average CPU load over the last {hours} hours, with {interval} minute interval.
     """
-    grps, stamps = __get_main_cpu_data_minutes(interval, hours)
+    grps, stamps = __get_main_cpu_data_hours(interval, hours)
     avg = __avg_by_stamp(grps)
 
     __jstat_plot(x=list(avg.keys()), y=list(avg.values()),
@@ -190,7 +200,7 @@ def plot_cpu_avg_per_minute(interval: int, minutes: int, period: str):
     """
     Plots the average CPU load over the last {minutes} minutes, with {interval} minute interval.
     """
-    grps, stamps = __get_main_cpu_data_minutes(interval, 60 // minutes)
+    grps, stamps = __get_main_cpu_data_minutes(interval, minutes)
     avg = __avg_by_stamp(grps)
 
     __jstat_plot(x=list(avg.keys()), y=list(avg.values()),
@@ -274,15 +284,27 @@ def __get_main_cpu_data_days() -> Tuple[dict, List[str]]:
     return grps, stamps
 
 
-def __get_main_cpu_data_minutes(interval: int, hours: int) -> Tuple[dict, List[str]]:
+def __get_main_cpu_data_hours(interval: int, hours: int) -> Tuple[dict, List[str]]:
     now = round(time.time())
     data = __get_main_cpu_data()
-    stamps = __create_minute_stamps(interval, hours, now)
+    stamps = __create_hour_stamps(interval, hours, now)
+    percentages = [cpu_load([data[x - 1], data[x]], False, True) for x in range(1, len(data))]
+    # no percentage entry for first index
+    del data[0]
+    grps = __group_by_stamp_hours(data, stamps, [x['cpu'] for x in percentages], interval, now,
+                                  hours)
+    return grps, list(grps.keys())
+
+
+def __get_main_cpu_data_minutes(interval: int, minutes: int) -> Tuple[dict, List[str]]:
+    now = round(time.time())
+    data = __get_main_cpu_data()
+    stamps = __create_minute_stamps(interval, minutes, now)
     percentages = [cpu_load([data[x - 1], data[x]], False, True) for x in range(1, len(data))]
     # no percentage entry for first index
     del data[0]
     grps = __group_by_stamp_minutes(data, stamps, [x['cpu'] for x in percentages], interval, now,
-                                    hours)
+                                    minutes)
     return grps, list(grps.keys())
 
 
@@ -306,8 +328,8 @@ def __jstat_plot(x: list, y: list, title: str, lim: list, ylabel: str):
     [i.set_color('white') for i in plt.gca().get_yticklabels()]
 
 
-def __group_by_stamp_minutes(data: list, stamps: List[dict], percentages: list,
-                             interval: int, now: int, hours: int) -> dict:
+def __group_by_stamp_hours(data: list, stamps: List[dict], percentages: list,
+                           interval: int, now: int, hours: int) -> dict:
     grps = {x['stamp']: [] for x in stamps}
     checkpoint = 0
     interval_sec = interval * 60
@@ -326,6 +348,30 @@ def __group_by_stamp_minutes(data: list, stamps: List[dict], percentages: list,
                     break
                 grps[stamps[x]['stamp']].append({'data': data[y], 'stamp': stamps[x]['real'],
                                                  'val': percentages[y]})
+    return grps
+
+
+def __group_by_stamp_minutes(data: list, stamps: List[dict], percentages: list,
+                             interval: int, now: int, minutes: int) -> dict:
+    grps = {x['stamp']: [] for x in stamps}
+    checkpoint = 0
+    interval_sec = interval * 60
+    first_stamp = now - (now % interval_sec) - (minutes * 60)
+    stamp_int = now - (now % interval_sec)
+
+    for x in range(len(stamps)):
+        if stamps[x]['real'] > stamp_int:
+            stamp_int -= interval_sec
+        else:
+            for y in range(checkpoint, len(data)):
+                if not __is_valid(first_stamp, int(data[y][0])):
+                    continue
+                if __is_in_next(stamps[x]['real'], int(data[y][0]), interval_sec):
+                    checkpoint = y
+                    break
+                grps[stamps[x]['stamp']].append({'data': data[y], 'stamp': stamps[x]['real'],
+                                                 'val': percentages[y]})
+    print(grps)
     return grps
 
 
@@ -348,9 +394,16 @@ def __is_valid(first_stamp: int, cur_entry: int) -> bool:
     return True
 
 
-def __create_minute_stamps(interval: int, hours: int, now: int) -> list:
+def __create_hour_stamps(interval: int, hours: int, now: int) -> list:
     last = now - (now % (interval * 60))
     first = last - (hours * 3600)
+    return [{'stamp': datetime.fromtimestamp(x).strftime('%H:%M'), 'real': x}
+            for x in range(first, last + 1, interval * 60)]
+
+
+def __create_minute_stamps(interval: int, minutes: int, now: int) -> list:
+    last = now - (now % (interval * 60))
+    first = last - (minutes * 60)
     return [{'stamp': datetime.fromtimestamp(x).strftime('%H:%M'), 'real': x}
             for x in range(first, last + 1, interval * 60)]
 
