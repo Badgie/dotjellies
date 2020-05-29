@@ -371,7 +371,6 @@ def __group_by_stamp_minutes(data: list, stamps: List[dict], percentages: list,
                     break
                 grps[stamps[x]['stamp']].append({'data': data[y], 'stamp': stamps[x]['real'],
                                                  'val': percentages[y]})
-    print(grps)
     return grps
 
 
