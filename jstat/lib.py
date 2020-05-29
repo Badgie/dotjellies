@@ -32,10 +32,11 @@ Machine
 
 def machine_status() -> dict:
     status_file = db.get_recent_machine()
+    print(status_file)
     del status_file[0]  # stamp not needed here
     return {re.search(r'[a-zA-Z ]{2,}', x.split(':')[0]).group().lstrip('m'):
             x.split(':')[1].strip().replace('\x1b[0m', '')
-            for x in status_file if x != 'null'}
+            for x in status_file if x and x != 'null'}
 
 
 def plot_machine_avg_per_day(days: int, period: str, col_name: str, col: str = '*'):
@@ -55,14 +56,29 @@ def plot_machine_avg_per_day(days: int, period: str, col_name: str, col: str = '
     plt.clf()
 
 
-def plot_machine_avg_per_minute(interval: int, hours: int, period: str, col_name: str,
-                                col: str = '*'):
+def plot_machine_avg_per_hour(interval: int, hours: int, period: str, col_name: str,
+                              col: str = '*'):
     lim = __lim(col)
     grps, stamps = __get_main_machine_data_minutes(interval, hours, col)
     avg = __avg_by_stamp(grps)
 
     __jstat_plot(x=list(avg.keys()), y=list(avg.values()),
                  title=f'{col_name} over the last {hours} hour{"s" if hours > 1 else ""} '
+                       f'({interval}m interval)',
+                 lim=lim, ylabel=col_name)
+    plt.savefig(f'{GRAPH_DIR}/{col}/{col}_plot_avg_hour_{period}.png', format='png',
+                facecolor=COLORS['gray'])
+    plt.clf()
+
+
+def plot_machine_avg_per_minute(interval: int, minutes: int, period: str, col_name: str,
+                                col: str = '*'):
+    lim = __lim(col)
+    grps, stamps = __get_main_machine_data_minutes(interval, 60 // minutes, col)
+    avg = __avg_by_stamp(grps)
+
+    __jstat_plot(x=list(avg.keys()), y=list(avg.values()),
+                 title=f'{col_name} over the last {minutes} minute{"s" if minutes > 1 else ""} '
                        f'({interval}m interval)',
                  lim=lim, ylabel=col_name)
     plt.savefig(f'{GRAPH_DIR}/{col}/{col}_plot_avg_minute_{period}.png', format='png',
@@ -120,6 +136,72 @@ CPU
 """
 
 
+def cpu_load(cpus: list, str_format: bool = True, plot: bool = False) -> dict:
+    _stat = __cpu_diff(cpus)
+    percentages = {}
+    for cid, stat in _stat.items():
+        total = 1 if stat['total_period'] == 0 else stat['total_period']
+        user = stat['user_period'] / total * 100
+        nice = stat['nice_period'] / total * 100
+        sys_all = stat['system_period_full'] / total * 100
+        steal_guest = (stat['steal_period'] + stat['guest_period']) / total * 100
+        percentages[cid] = f'{user + nice + sys_all + steal_guest:.2f}%' if str_format else \
+            user + nice + sys_all + steal_guest
+    if not plot:
+        del percentages['cpu']
+    return percentages
+
+
+def plot_cpu_avg_per_day(days: int, period: str):
+    """
+    Plots the average CPU load over the last {days} days, with daily interval.
+    """
+    grps, stamps = __get_main_cpu_data_days()
+    avg = __avg_by_stamp(grps)
+
+    x = list(avg.keys()) if len(avg.keys()) < days else \
+        [list(avg.keys())[day] for day in range(len(avg.keys()) - days, len(avg.keys()))]
+    y = list(avg.values()) if len(avg.values()) < days else \
+        [list(avg.values())[day] for day in range(len(avg.values()) - days, len(avg.keys()))]
+
+    __jstat_plot(x=x, y=y, title=f'CPU load over the last {days} days (1 day interval)',
+                 lim=[0, 100], ylabel='CPU load')
+    plt.savefig(f'{GRAPH_DIR}/cpu/cpu_plot_avg_{period}.png', format='png', facecolor=COLORS['gray'])
+    plt.clf()
+
+
+def plot_cpu_avg_per_hour(interval: int, hours: int, period: str):
+    """
+    Plots the average CPU load over the last {hours} hours, with {interval} minute interval.
+    """
+    grps, stamps = __get_main_cpu_data_minutes(interval, hours)
+    avg = __avg_by_stamp(grps)
+
+    __jstat_plot(x=list(avg.keys()), y=list(avg.values()),
+                 title=f'CPU load over the last {hours} hour{"s" if hours > 1 else ""} '
+                       f'({interval}m interval)',
+                 lim=[0, 100], ylabel='CPU load')
+    plt.savefig(f'{GRAPH_DIR}/cpu/cpu_plot_avg_hour_{period}.png', format='png',
+                facecolor=COLORS['gray'])
+    plt.clf()
+
+
+def plot_cpu_avg_per_minute(interval: int, minutes: int, period: str):
+    """
+    Plots the average CPU load over the last {minutes} minutes, with {interval} minute interval.
+    """
+    grps, stamps = __get_main_cpu_data_minutes(interval, 60 // minutes)
+    avg = __avg_by_stamp(grps)
+
+    __jstat_plot(x=list(avg.keys()), y=list(avg.values()),
+                 title=f'CPU load over the last {minutes} minute{"s" if minutes > 1 else ""} '
+                       f'({interval}m interval)',
+                 lim=[0, 100], ylabel='CPU load')
+    plt.savefig(f'{GRAPH_DIR}/cpu/cpu_plot_avg_minute_{period}.png', format='png',
+                facecolor=COLORS['gray'])
+    plt.clf()
+
+
 def __cpu(cpus: list) -> dict:
     # [id, user, nice, system, idle, iowait, irq, softirq, steal, guest, guest_nice]
     # http://man7.org/linux/man-pages/man5/proc.5.html
@@ -171,22 +253,6 @@ def __sub(x, y) -> int:
     return x - y if x > y else 0
 
 
-def cpu_load(cpus: list, str_format: bool = True, plot: bool = False) -> dict:
-    _stat = __cpu_diff(cpus)
-    percentages = {}
-    for cid, stat in _stat.items():
-        total = 1 if stat['total_period'] == 0 else stat['total_period']
-        user = stat['user_period'] / total * 100
-        nice = stat['nice_period'] / total * 100
-        sys_all = stat['system_period_full'] / total * 100
-        steal_guest = (stat['steal_period'] + stat['guest_period']) / total * 100
-        percentages[cid] = f'{user + nice + sys_all + steal_guest:.2f}%' if str_format else \
-            user + nice + sys_all + steal_guest
-    if not plot:
-        del percentages['cpu']
-    return percentages
-
-
 def __get_main_cpu_data() -> list:
     return [entry for entry in db.get_all_cpu() if entry[1] == 'cpu']
 
@@ -218,40 +284,6 @@ def __get_main_cpu_data_minutes(interval: int, hours: int) -> Tuple[dict, List[s
     grps = __group_by_stamp_minutes(data, stamps, [x['cpu'] for x in percentages], interval, now,
                                     hours)
     return grps, list(grps.keys())
-
-
-def plot_cpu_avg_per_day(days: int, period: str):
-    """
-    Plots the average CPU load over the last {days} days, with daily interval.
-    """
-    grps, stamps = __get_main_cpu_data_days()
-    avg = __avg_by_stamp(grps)
-
-    x = list(avg.keys()) if len(avg.keys()) < days else \
-        [list(avg.keys())[day] for day in range(len(avg.keys()) - days, len(avg.keys()))]
-    y = list(avg.values()) if len(avg.values()) < days else \
-        [list(avg.values())[day] for day in range(len(avg.values()) - days, len(avg.keys()))]
-
-    __jstat_plot(x=x, y=y, title=f'CPU load over the last {days} days (1 day interval)',
-                 lim=[0, 100], ylabel='CPU load')
-    plt.savefig(f'{GRAPH_DIR}/cpu/cpu_plot_avg_{period}.png', format='png', facecolor=COLORS['gray'])
-    plt.clf()
-
-
-def plot_cpu_avg_per_minute(interval: int, hours: int, period: str):
-    """
-    Plots the average CPU load over the last {hours} hours, with {interval} minute interval.
-    """
-    grps, stamps = __get_main_cpu_data_minutes(interval, hours)
-    avg = __avg_by_stamp(grps)
-
-    __jstat_plot(x=list(avg.keys()), y=list(avg.values()),
-                 title=f'CPU load over the last {hours} hour{"s" if hours > 1 else ""} '
-                       f'({interval}m interval)',
-                 lim=[0, 100], ylabel='CPU load')
-    plt.savefig(f'{GRAPH_DIR}/cpu/cpu_plot_avg_minute_{period}.png', format='png',
-                facecolor=COLORS['gray'])
-    plt.clf()
 
 
 """

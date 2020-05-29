@@ -11,18 +11,18 @@ jstat = Flask(__name__)
 status = {'content': {'header': 'Jellyfin server status',
                       'intro': 'Server status for the Jellyfin server at '},
           'url': 'https://jelly.badgy.eu/', 'name': 'jelly.badgy.eu', 'cpu': {}}
-graphs = {'types': {'cpu': {'base': 'cpu_plot_avg_', 'front': 'minute_hour',
-                            'full_path': 'img/graphs/cpu/cpu_plot_avg_minute_hour.png',
+graphs = {'types': {'cpu': {'base': 'cpu_plot_avg_', 'front': 'minute_ten',
+                            'full_path': 'img/graphs/cpu/cpu_plot_avg_minute_ten.png',
                             'header_name': 'CPU'},
-                    'memory': {'base': 'memory_plot_avg_', 'front': 'minute_hour',
-                               'full_path': 'img/graphs/memory/memory_plot_avg_minute_hour.png',
+                    'memory': {'base': 'memory_plot_avg_', 'front': 'minute_ten',
+                               'full_path': 'img/graphs/memory/memory_plot_avg_minute_ten.png',
                                'header_name': 'Memory'},
-                    'res_time': {'base': 'res_time_plot_avg_', 'front': 'minute_hour',
+                    'res_time': {'base': 'res_time_plot_avg_', 'front': 'minute_ten',
                                  'full_path': 'img/graphs/res_time/res_time_plot_avg_'
-                                              'minute_hour.png',
+                                              'minute_ten.png',
                                  'header_name': 'Response time'}},
-          'intervals': ['minute_hour', 'minute_threehour', 'minute_sixhour',
-                        'minute_halfday', 'minute_day', 'minute_twoday', 'week', 'month'],
+          'intervals': ['minute_ten', 'minute_thirty', 'hour_hour', 'hour_threehour',
+                        'hour_sixhour', 'hour_halfday', 'hour_day', 'hour_twoday', 'week', 'month'],
           'path': 'img/graphs'}
 
 if platform.uname().node == 'raspberrypi':
